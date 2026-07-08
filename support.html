@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Help & Support — Droplee</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --green: #22C55E; --forest: #0D1F0D; --sage: #F0F7F1; --slate: #4A5E4A; --mist: #8aab8a; --white: #FFFFFF; --border: #ddeedd; --shadow: 0 4px 24px rgba(13,31,13,0.08); }
+  body { font-family: 'Poppins', sans-serif; background: var(--sage); color: var(--forest); min-height: 100vh; }
+  nav { position: sticky; top: 0; z-index: 200; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 68px; background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+  .logo { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--green); text-decoration: none; }
+  .btn-nav-primary { padding: 9px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; color: var(--forest); background: var(--green); border: none; cursor: pointer; text-decoration: none; }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-family: 'Poppins', sans-serif; font-size: 2rem; margin-bottom: 12px; }
+  p.sub { color: var(--slate); line-height: 1.7; margin-bottom: 30px; }
+  .contact-card { background: var(--white); border-radius: 16px; box-shadow: var(--shadow); padding: 28px; }
+  .contact-row { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .contact-row:last-child { border-bottom: none; }
+  .contact-icon { font-size: 1.6rem; }
+  .contact-label { font-size: 0.8rem; color: var(--mist); }
+  .contact-value { font-weight: 700; font-size: 1.05rem; }
+  .contact-row a { color: var(--forest); text-decoration: none; }
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">droplee</a>
+  <a href="index.html" class="btn-nav-primary">Back to site</a>
+</nav>
+<div class="wrap">
+  <h1>Help & Support</h1>
+  <p class="sub">Whether you're a customer with an order question or a business wanting to get in touch — we're happy to help.</p>
+  <div class="contact-card">
+    <div class="contact-row">
+      <span class="contact-icon">📞</span>
+      <div>
+        <div class="contact-label">Call or WhatsApp</div>
+        <a href="tel:0641698974"><div class="contact-value">064 169 8974</div></a>
+      </div>
+    </div>
+    <div class="contact-row">
+      <span class="contact-icon">✉️</span>
+      <div>
+        <div class="contact-label">Email</div>
+        <a href="mailto:xalindaf@gmail.com"><div class="contact-value">xalindaf@gmail.com</div></a>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
