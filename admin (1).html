@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Droplee — Store dashboard</title>
+<meta name="robots" content="noindex, nofollow"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #22C55E;
+    --forest: #0D1F0D;
+    --sage: #F0F7F1;
+    --white: #ffffff;
+    --mist: #6B7A6B;
+    --slate: #3F4A3F;
+  }
+  body { font-family: 'Poppins', sans-serif; background: var(--sage); color: var(--forest); min-height: 100vh; }
+  header { background: var(--forest); color: var(--white); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { font-size: 1.2rem; }
+  header a, header button.linklike { color: var(--green); text-decoration: none; font-size: 0.85rem; font-weight: 600; background: none; border: none; cursor: pointer; font-family: inherit; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+  .card { max-width: 420px; margin: 60px auto; background: var(--white); padding: 28px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+  .card input, .card select { width: 100%; padding: 12px 14px; margin-bottom: 10px; border: 1.5px solid #E2E8E2; border-radius: 10px; font-family: inherit; font-size: 0.95rem; }
+  .card button.primary { width: 100%; padding: 13px; background: var(--green); border: none; border-radius: 10px; color: var(--white); font-weight: 700; cursor: pointer; }
+  .errorMsg { color: #dc2626; font-size: 0.85rem; margin-top: 8px; display: none; }
+  .authToggle { display: flex; gap: 8px; margin-bottom: 20px; background: var(--sage); border-radius: 12px; padding: 4px; }
+  .authToggle button { flex: 1; padding: 10px; border: none; border-radius: 9px; font-family: inherit; font-weight: 600; cursor: pointer; background: transparent; color: var(--slate); }
+  .authToggle button.active { background: var(--white); color: var(--forest); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn { padding: 8px 16px; border-radius: 100px; border: 1.5px solid #d3ddd3; background: var(--white); font-family: inherit; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: var(--slate); }
+  .tab-btn.active { background: var(--forest); color: var(--white); border-color: var(--forest); }
+  .order-card { background: var(--white); border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .order-status { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 100px; }
+  .status-placed { background: #fef3c7; color: #92400e; }
+  .status-store_accepted { background: #dbeafe; color: #1e40af; }
+  .status-preparing { background: #ede9fe; color: #5b21b6; }
+  .status-ready_for_pickup { background: #d1fae5; color: #065f46; }
+  .status-delivered { background: #e5e7eb; color: #374151; }
+  .status-rejected { background: #fee2e2; color: #991b1b; }
+  .item-line { font-size: 0.85rem; color: var(--slate); margin-bottom: 2px; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .actions button { padding: 9px 16px; border-radius: 8px; border: none; font-family: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer; }
+  .btn-accept { background: var(--green); color: var(--white); }
+  .btn-reject { background: #fee2e2; color: #991b1b; }
+  .btn-next { background: var(--forest); color: var(--white); }
+  .btn-claim { background: var(--forest); color: var(--white); width: 100%; padding: 12px; border-radius: 10px; border: none; font-family: inherit; font-weight: 600; cursor: pointer; margin-bottom: 8px; }
+  #emptyMsg { color: var(--mist); text-align: center; padding: 40px 0; }
+  .badge-super { background: var(--green); color: var(--forest); font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 100px; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 Droplee — Store dashboard <span id="roleBadge"></span></h1>
+  <div style="display:flex;gap:16px;align-items:center;">
+    <button class="linklike" id="logoutBtn" style="display:none;">Log out</button>
+    <a href="index.html">← Back to site</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- LOGIN / SIGNUP GATE -->
+  <div id="authGate" class="card">
+    <div class="authToggle">
+      <button id="toggleLoginBtn" class="active">Log in</button>
+      <button id="toggleSignupBtn">Sign up</button>
+    </div>
+
+    <div id="loginBox">
+      <h2 style="margin-bottom:16px;">Store login</h2>
+      <input type="email" id="loginEmail" placeholder="Email"/>
+      <input type="password" id="loginPassword" placeholder="Password"/>
+      <button class="primary" id="loginBtn">Log in</button>
+      <p class="errorMsg" id="loginError"></p>
+    </div>
+
+    <div id="signupBox" style="display:none;">
+      <h2 style="margin-bottom:16px;">Create a business account</h2>
+      <input type="text" id="signupName" placeholder="Your name"/>
+      <input type="email" id="signupEmail" placeholder="Email"/>
+      <input type="password" id="signupPassword" placeholder="Password (6+ characters)"/>
+      <button class="primary" id="signupBtn">Sign up</button>
+      <p class="errorMsg" id="signupError"></p>
+    </div>
+  </div>
+
+  <!-- STORE SETUP (for business accounts with no store yet) -->
+  <div id="storeSetup" class="card" style="display:none;max-width:480px;">
+    <h2 style="margin-bottom:6px;">Set up your store</h2>
+    <p style="color:var(--mist);font-size:0.9rem;margin-bottom:20px;">Claim an existing listing, or create a brand new one.</p>
+
+    <div id="unclaimedList"></div>
+
+    <div style="border-top:1.5px solid #E2E8E2;margin:20px 0;padding-top:20px;">
+      <h3 style="margin-bottom:12px;font-size:1rem;">Or create a new store</h3>
+      <input type="text" id="newStoreName" placeholder="Store name"/>
+      <input type="text" id="newStoreCategory" placeholder="Category (e.g. Groceries, Pharmacy)"/>
+      <input type="text" id="newStoreLogo" placeholder="Logo filename (optional, e.g. mystore-logo.png)"/>
+      <button class="primary" id="createStoreBtn">Create store</button>
+      <p class="errorMsg" id="storeSetupError"></p>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="dashboard" style="display:none;">
+    <div id="dashboardTabs" class="tabs">
+      <button class="tab-btn section-btn active" data-section="orders">Orders</button>
+      <button class="tab-btn section-btn" data-section="menu">Manage menu</button>
+      <button class="tab-btn section-btn" data-section="settings">Store settings</button>
+    </div>
+
+    <div id="ordersSection">
+      <div class="tabs">
+        <button class="tab-btn filter-btn active" data-filter="active">Active orders</button>
+        <button class="tab-btn filter-btn" data-filter="all">All orders</button>
+      </div>
+      <div id="ordersList"></div>
+      <p id="emptyMsg" style="display:none;">No orders yet.</p>
+    </div>
+
+    <div id="settingsSection" style="display:none;">
+      <div id="settingsStoreSelectWrap" style="display:none;">
+        <label style="font-weight:600;font-size:0.85rem;display:block;margin-bottom:6px;">Store</label>
+        <select id="settingsStoreSelect" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;margin-bottom:20px;"></select>
+      </div>
+      <div class="order-card">
+        <div style="font-weight:700;margin-bottom:6px;">Payment details</div>
+        <p style="color:var(--mist);font-size:0.82rem;margin-bottom:14px;">This connects the store to Paystack so its share of every paid order is sent straight to this bank account automatically.</p>
+        <p id="paymentConnectedStatus" style="display:none;background:var(--sage);color:var(--forest);padding:8px 12px;border-radius:8px;font-size:0.82rem;font-weight:600;margin-bottom:14px;">✓ Connected to Paystack</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+          <input id="bankBusinessName" placeholder="Business / account holder name" style="flex:1;min-width:160px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+          <select id="bankCodeSelect" style="flex:1;min-width:160px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;">
+            <option value="">Loading banks…</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+          <input id="bankAccountNumber" placeholder="Account number" style="flex:1;min-width:160px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+        </div>
+        <button id="saveBankDetailsBtn" class="btn-accept" style="padding:10px 18px;">Connect payments</button>
+        <p id="bankDetailsStatus" style="font-size:0.85rem;margin-top:8px;"></p>
+      </div>
+    </div>
+
+    <div id="menuSection" style="display:none;">
+      <div id="storeSelectWrap" style="display:none;">
+        <label style="font-weight:600;font-size:0.85rem;display:block;margin-bottom:6px;">Store</label>
+        <select id="menuStoreSelect" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;margin-bottom:20px;"></select>
+
+        <div class="order-card">
+          <div style="font-weight:700;margin-bottom:12px;">+ Add a new store</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <input id="newAdminStoreName" placeholder="Store name" style="flex:2;min-width:140px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+            <input id="newAdminStoreCategory" placeholder="Category" style="flex:2;min-width:140px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+            <input id="newAdminStoreLogo" placeholder="Logo filename (optional)" style="flex:2;min-width:140px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+            <button id="createAdminStoreBtn" class="btn-accept" style="padding:10px 18px;">Add store</button>
+          </div>
+          <p id="adminStoreError" style="color:#dc2626;font-size:0.85rem;margin-top:8px;display:none;"></p>
+        </div>
+      </div>
+      <div id="myStoreLabel" style="font-weight:700;margin-bottom:16px;display:none;"></div>
+
+      <div class="order-card">
+        <div style="font-weight:700;margin-bottom:12px;">Add a menu item</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <input id="newItemName" placeholder="Item name" style="flex:2;min-width:160px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+          <input id="newItemPrice" type="number" placeholder="Price (R)" style="flex:1;min-width:100px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+          <input id="newItemDescription" placeholder="Description (optional)" style="flex:2;min-width:160px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+          <input id="newItemPhoto" placeholder="Photo URL (optional)" style="flex:2;min-width:160px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+          <input id="newItemCategory" placeholder="Category (e.g. Edibles, Vapes, Accessories)" style="flex:2;min-width:160px;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>
+          <button id="addItemBtn" class="btn-accept" style="padding:10px 18px;">Add item</button>
+        </div>
+        <p id="menuError" style="color:#dc2626;font-size:0.85rem;margin-top:8px;display:none;"></p>
+      </div>
+
+      <div class="order-card">
+        <div style="font-weight:700;margin-bottom:6px;">Bulk import products</div>
+        <p style="color:var(--mist);font-size:0.82rem;margin-bottom:10px;">One product per line, in this format: <code>Name | Price | Description | Photo URL | Category</code> (description, photo and category can be left blank, but keep the <code>|</code> separators)</p>
+        <textarea id="bulkImportText" rows="6" placeholder="90mg Choc Chip Infused Cookies | 110 | Premium infused edible | https://example.com/img.jpg | Edibles" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>
+        <button id="bulkImportBtn" class="btn-accept" style="margin-top:10px;padding:10px 18px;">Import all</button>
+        <p id="bulkImportStatus" style="font-size:0.85rem;margin-top:8px;"></p>
+      </div>
+
+      <div class="order-card">
+        <div style="font-weight:700;margin-bottom:6px;">Bulk categorize existing products</div>
+        <p style="color:var(--mist);font-size:0.82rem;margin-bottom:10px;">Update categories for products you already added, without deleting or recreating them. One per line: <code>Exact Product Name | Category</code></p>
+        <textarea id="bulkCategorizeText" rows="6" placeholder="90mg Choc Chip Infused Cookies | Edibles" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>
+        <button id="bulkCategorizeBtn" class="btn-accept" style="margin-top:10px;padding:10px 18px;">Apply categories</button>
+        <p id="bulkCategorizeStatus" style="font-size:0.85rem;margin-top:8px;"></p>
+      </div>
+
+      <div id="menuItemsList" style="margin-top:20px;"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCyMzg1D27qODVImEtAR5YhKV5_kWTskas",
+    authDomain: "droplee.firebaseapp.com",
+    projectId: "droplee",
+    storageBucket: "droplee.firebasestorage.app",
+    messagingSenderId: "240182730322",
+    appId: "1:240182730322:web:de6cdd6decf071e88e898b",
+    measurementId: "G-JSES0DWZN4"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const CLOUD_FUNCTIONS_BASE = '-240182730322.africa-south1.run.app';
+
+  const SUPERADMIN_EMAIL = 'xalindaf@gmail.com';
+
+  const statusFlow = ['placed', 'store_accepted', 'preparing', 'ready_for_pickup', 'delivered'];
+  const statusLabels = {
+    placed: 'New order', store_accepted: 'Accepted', preparing: 'Preparing',
+    ready_for_pickup: 'Ready for pickup', delivered: 'Delivered', rejected: 'Rejected'
+  };
+  let currentFilter = 'active';
+  let unsubscribe = null;
+  let isSuperadmin = false;
+  let myStoreId = null;
+  let myStoreName = null;
+
+  function fmtR(n) { return 'R' + n.toFixed(2).replace(/\.00$/, ''); }
+
+  // ── AUTH TOGGLE (login/signup) ──
+  document.getElementById('toggleLoginBtn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('toggleSignupBtn').classList.remove('active');
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('signupBox').style.display = 'none';
+  });
+  document.getElementById('toggleSignupBtn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('toggleLoginBtn').classList.remove('active');
+    document.getElementById('signupBox').style.display = 'block';
+    document.getElementById('loginBox').style.display = 'none';
+  });
+
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    errorEl.style.display = 'none';
+    auth.signInWithEmailAndPassword(email, password).catch(function(err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    });
+  });
+
+  document.getElementById('signupBtn').addEventListener('click', function() {
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const errorEl = document.getElementById('signupError');
+    errorEl.style.display = 'none';
+    if (!name || !email || !password) {
+      errorEl.textContent = 'Please fill in all fields.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    auth.createUserWithEmailAndPassword(email, password).then(function(cred) {
+      return cred.user.updateProfile({ displayName: name });
+    }).catch(function(err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    auth.signOut();
+  });
+
+  // ── AUTH STATE ──
+  auth.onAuthStateChanged(function(user) {
+    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+    document.getElementById('authGate').style.display = 'none';
+    document.getElementById('storeSetup').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('roleBadge').innerHTML = '';
+
+    if (!user) {
+      document.getElementById('authGate').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('logoutBtn').style.display = 'inline';
+    isSuperadmin = (user.email === SUPERADMIN_EMAIL);
+
+    if (isSuperadmin) {
+      document.getElementById('roleBadge').innerHTML = '<span class="badge-super">Super admin</span>';
+      showDashboard();
+      return;
+    }
+
+    // Business account — check if they already own a store
+    db.collection('stores').where('ownerUid', '==', user.uid).get().then(function(snap) {
+      if (!snap.empty) {
+        const doc = snap.docs[0];
+        myStoreId = doc.id;
+        myStoreName = doc.data().name;
+        showDashboard();
+      } else {
+        showStoreSetup();
+      }
+    });
+  });
+
+  // ── STORE SETUP (claim or create) ──
+  function showStoreSetup() {
+    document.getElementById('storeSetup').style.display = 'block';
+    const list = document.getElementById('unclaimedList');
+    list.innerHTML = '<p style="color:var(--mist);">Loading available stores…</p>';
+    db.collection('stores').get().then(function(snap) {
+      const unclaimed = [];
+      snap.forEach(function(doc) { if (!doc.data().ownerUid) unclaimed.push(Object.assign({ id: doc.id }, doc.data())); });
+      if (unclaimed.length === 0) {
+        list.innerHTML = '<p style="color:var(--mist);">No unclaimed stores right now.</p>';
+        return;
+      }
+      list.innerHTML = '<h3 style="margin-bottom:12px;font-size:1rem;">Claim an existing store</h3>';
+      unclaimed.forEach(function(store) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-claim';
+        btn.textContent = 'Claim "' + store.name + '"';
+        btn.addEventListener('click', function() {
+          const errorEl = document.getElementById('storeSetupError');
+          errorEl.style.display = 'none';
+          db.collection('stores').doc(store.id).update({ ownerUid: auth.currentUser.uid, ownerEmail: auth.currentUser.email }).then(function() {
+            myStoreId = store.id;
+            myStoreName = store.name;
+            document.getElementById('storeSetup').style.display = 'none';
+            showDashboard();
+          }).catch(function(err) {
+            errorEl.textContent = err.message;
+            errorEl.style.display = 'block';
+          });
+        });
+        list.appendChild(btn);
+      });
+    });
+  }
+
+  document.getElementById('createStoreBtn').addEventListener('click', function() {
+    const name = document.getElementById('newStoreName').value.trim();
+    const category = document.getElementById('newStoreCategory').value.trim();
+    const logo = document.getElementById('newStoreLogo').value.trim();
+    const errorEl = document.getElementById('storeSetupError');
+    errorEl.style.display = 'none';
+    if (!name) { errorEl.textContent = 'Please enter a store name.'; errorEl.style.display = 'block'; return; }
+
+    db.collection('stores').add({
+      name: name, category: category, logo: logo || null,
+      ownerUid: auth.currentUser.uid, ownerEmail: auth.currentUser.email
+    }).then(function(ref) {
+      myStoreId = ref.id;
+      myStoreName = name;
+      document.getElementById('storeSetup').style.display = 'none';
+      showDashboard();
+    }).catch(function(err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    });
+  });
+
+  // ── DASHBOARD ──
+  function showDashboard() {
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('storeSelectWrap').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('settingsStoreSelectWrap').style.display = isSuperadmin ? 'block' : 'none';
+    if (!isSuperadmin) {
+      document.getElementById('myStoreLabel').style.display = 'block';
+      document.getElementById('myStoreLabel').textContent = 'Managing: ' + myStoreName;
+    }
+    listenForOrders();
+  }
+
+  document.querySelectorAll('.section-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.section-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      const section = btn.getAttribute('data-section');
+      document.getElementById('ordersSection').style.display = section === 'orders' ? 'block' : 'none';
+      document.getElementById('menuSection').style.display = section === 'menu' ? 'block' : 'none';
+      document.getElementById('settingsSection').style.display = section === 'settings' ? 'block' : 'none';
+      if (section === 'menu') {
+        if (isSuperadmin) loadStoresIntoSelect();
+        else loadMenuItems(myStoreId);
+      }
+      if (section === 'settings') {
+        if (isSuperadmin) loadStoresIntoSettingsSelect();
+        else loadBankDetails(myStoreId);
+      }
+    });
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-filter');
+      listenForOrders();
+    });
+  });
+
+  // ── MENU MANAGEMENT ──
+  document.getElementById('createAdminStoreBtn').addEventListener('click', function() {
+    const name = document.getElementById('newAdminStoreName').value.trim();
+    const category = document.getElementById('newAdminStoreCategory').value.trim();
+    const logo = document.getElementById('newAdminStoreLogo').value.trim();
+    const errorEl = document.getElementById('adminStoreError');
+    errorEl.style.display = 'none';
+    if (!name) { errorEl.textContent = 'Please enter a store name.'; errorEl.style.display = 'block'; return; }
+
+    db.collection('stores').add({
+      name: name, category: category, logo: logo || null
+    }).then(function(ref) {
+      document.getElementById('newAdminStoreName').value = '';
+      document.getElementById('newAdminStoreCategory').value = '';
+      document.getElementById('newAdminStoreLogo').value = '';
+      loadStoresIntoSelect();
+    }).catch(function(err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    });
+  });
+
+  function loadStoresIntoSelect() {
+    const select = document.getElementById('menuStoreSelect');
+    select.innerHTML = '<option>Loading…</option>';
+    db.collection('stores').get().then(function(snap) {
+      select.innerHTML = '';
+      if (snap.empty) {
+        select.innerHTML = '<option value="">No stores found</option>';
+        return;
+      }
+      snap.forEach(function(doc) {
+        const opt = document.createElement('option');
+        opt.value = doc.id;
+        opt.textContent = doc.data().name || '(unnamed store)';
+        select.appendChild(opt);
+      });
+      if (select.value) loadMenuItems(select.value);
+    }).catch(function(err) {
+      select.innerHTML = '<option value="">Error loading stores</option>';
+      document.getElementById('menuItemsList').innerHTML = '<p style="color:#dc2626;">' + err.message + '</p>';
+    });
+  }
+
+  document.getElementById('menuStoreSelect').addEventListener('change', function() {
+    loadMenuItems(this.value);
+  });
+
+  // ── STORE SETTINGS (Paystack payment connection) ──
+  let banksLoaded = false;
+  let banksList = [];
+
+  function loadBanksIntoDropdown() {
+    const select = document.getElementById('bankCodeSelect');
+    if (banksLoaded) return Promise.resolve();
+    return fetch('https://list-banks' + CLOUD_FUNCTIONS_BASE).then(function(r) { return r.json(); }).then(function(result) {
+      if (result.error) throw new Error(result.error);
+      banksList = result;
+      select.innerHTML = '<option value="">Select bank…</option>';
+      banksList.forEach(function(b) {
+        const opt = document.createElement('option');
+        opt.value = b.code;
+        opt.textContent = b.name;
+        select.appendChild(opt);
+      });
+      banksLoaded = true;
+    }).catch(function(err) {
+      select.innerHTML = '<option value="">Could not load banks</option>';
+    });
+  }
+
+  function loadStoresIntoSettingsSelect() {
+    const select = document.getElementById('settingsStoreSelect');
+    select.innerHTML = '<option>Loading…</option>';
+    db.collection('stores').get().then(function(snap) {
+      select.innerHTML = '';
+      if (snap.empty) {
+        select.innerHTML = '<option value="">No stores found</option>';
+        return;
+      }
+      snap.forEach(function(doc) {
+        const opt = document.createElement('option');
+        opt.value = doc.id;
+        opt.textContent = doc.data().name || '(unnamed store)';
+        select.appendChild(opt);
+      });
+      if (select.value) loadBankDetails(select.value);
+    }).catch(function(err) {
+      select.innerHTML = '<option value="">Error loading stores</option>';
+    });
+  }
+
+  document.getElementById('settingsStoreSelect').addEventListener('change', function() {
+    loadBankDetails(this.value);
+  });
+
+  function loadBankDetails(storeId) {
+    if (!storeId) return;
+    loadBanksIntoDropdown().then(function() {
+      db.collection('stores').doc(storeId).get().then(function(doc) {
+        const data = doc.exists ? doc.data() : {};
+        document.getElementById('bankBusinessName').value = data.bankName || myStoreName || '';
+        document.getElementById('bankCodeSelect').value = data.bankCode || '';
+        document.getElementById('bankAccountNumber').value = data.bankAccountNumber || '';
+        document.getElementById('paymentConnectedStatus').style.display = data.paystackSubaccountCode ? 'block' : 'none';
+      });
+    });
+  }
+
+  document.getElementById('saveBankDetailsBtn').addEventListener('click', function() {
+    const storeId = isSuperadmin ? document.getElementById('settingsStoreSelect').value : myStoreId;
+    const statusEl = document.getElementById('bankDetailsStatus');
+    statusEl.style.display = 'block';
+    statusEl.style.color = 'var(--mist)';
+    if (!storeId) { statusEl.style.color = '#dc2626'; statusEl.textContent = 'No store selected.'; return; }
+
+    const businessName = document.getElementById('bankBusinessName').value.trim();
+    const bankCode = document.getElementById('bankCodeSelect').value;
+    const accountNumber = document.getElementById('bankAccountNumber').value.trim();
+
+    if (!businessName || !bankCode || !accountNumber) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = 'Please fill in business name, bank, and account number.';
+      return;
+    }
+
+    statusEl.textContent = 'Connecting to Paystack…';
+
+    auth.currentUser.getIdToken().then(function(idToken) {
+      return fetch('https://create-paystack-subaccount' + CLOUD_FUNCTIONS_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        body: JSON.stringify({ storeId: storeId, businessName: businessName, bankCode: bankCode, accountNumber: accountNumber })
+      });
+    }).then(function(r) { return r.json(); }).then(function(result) {
+      if (result.error) throw new Error(result.error);
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = 'Connected! This store can now receive payments.';
+      document.getElementById('paymentConnectedStatus').style.display = 'block';
+    }).catch(function(err) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = err.message;
+    });
+  });
+
+  function loadMenuItems(storeId) {
+    if (!storeId) return;
+    const list = document.getElementById('menuItemsList');
+    list.innerHTML = '<p style="color:var(--mist);">Loading…</p>';
+    db.collection('menuitems').where('storeId', '==', storeId).get().then(function(snap) {
+      if (snap.empty) { list.innerHTML = '<p style="color:var(--mist);">No items yet — add one above.</p>'; return; }
+      list.innerHTML = '<p style="color:var(--mist);font-size:0.85rem;margin-bottom:10px;">' + snap.size + ' product' + (snap.size === 1 ? '' : 's') + '</p>';
+      snap.forEach(function(doc) {
+        const item = doc.data();
+        const row = document.createElement('div');
+        row.className = 'order-card';
+
+        const displayRow = document.createElement('div');
+        displayRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;';
+        const thumbHtml = item.photo
+          ? '<img src="' + item.photo + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;"/>'
+          : '<div style="width:44px;height:44px;background:var(--sage);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">📦</div>';
+        displayRow.innerHTML =
+          '<div style="display:flex;gap:12px;align-items:center;min-width:0;">' + thumbHtml +
+          '<div style="min-width:0;"><div style="font-weight:600;">' + item.name +
+          (item.category ? ' <span style="font-size:0.7rem;font-weight:600;background:var(--sage);color:var(--slate);padding:2px 8px;border-radius:100px;margin-left:6px;">' + item.category + '</span>' : '') +
+          '</div>' +
+          (item.description ? '<div style="font-size:0.78rem;color:var(--mist);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;">' + item.description + '</div>' : '<div style="font-size:0.78rem;color:#c98a00;">No description yet</div>') +
+          '<div style="font-size:0.85rem;color:var(--mist);">' + fmtR(item.price) + '</div></div></div>' +
+          '<div style="display:flex;gap:8px;flex-shrink:0;"><button class="btn-next editBtn" style="padding:9px 14px;">Edit</button><button class="btn-reject delBtn" style="padding:9px 14px;">Delete</button></div>';
+        row.appendChild(displayRow);
+
+        const editForm = document.createElement('div');
+        editForm.style.cssText = 'display:none;margin-top:14px;padding-top:14px;border-top:1px solid #E2E8E2;';
+        editForm.innerHTML =
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
+            '<input class="editName" value="' + item.name.replace(/"/g, '&quot;') + '" style="flex:2;min-width:140px;padding:9px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>' +
+            '<input class="editPrice" type="number" value="' + item.price + '" style="flex:1;min-width:100px;padding:9px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>' +
+          '</div>' +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
+            '<input class="editDescription" placeholder="Description" value="' + (item.description ? item.description.replace(/"/g, '&quot;') : '') + '" style="flex:2;min-width:140px;padding:9px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>' +
+            '<input class="editPhoto" placeholder="Photo URL" value="' + (item.photo ? item.photo.replace(/"/g, '&quot;') : '') + '" style="flex:2;min-width:140px;padding:9px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>' +
+          '</div>' +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
+            '<input class="editCategory" placeholder="Category" value="' + (item.category ? item.category.replace(/"/g, '&quot;') : '') + '" style="flex:2;min-width:140px;padding:9px 12px;border-radius:8px;border:1.5px solid #d3ddd3;font-family:inherit;"/>' +
+          '</div>' +
+          '<button class="btn-accept saveBtn" style="padding:9px 16px;">Save changes</button>' +
+          '<span class="editStatus" style="font-size:0.82rem;margin-left:10px;"></span>';
+        row.appendChild(editForm);
+
+        displayRow.querySelector('.editBtn').addEventListener('click', function() {
+          editForm.style.display = editForm.style.display === 'none' ? 'block' : 'none';
+        });
+        displayRow.querySelector('.delBtn').addEventListener('click', function() {
+          if (confirm('Delete "' + item.name + '"?')) {
+            db.collection('menuitems').doc(doc.id).delete().then(function() { loadMenuItems(storeId); });
+          }
+        });
+        editForm.querySelector('.saveBtn').addEventListener('click', function() {
+          const newName = editForm.querySelector('.editName').value.trim();
+          const newPrice = parseFloat(editForm.querySelector('.editPrice').value);
+          const newDescription = editForm.querySelector('.editDescription').value.trim();
+          const newPhoto = editForm.querySelector('.editPhoto').value.trim();
+          const newCategory = editForm.querySelector('.editCategory').value.trim();
+          const statusEl = editForm.querySelector('.editStatus');
+          if (!newName || isNaN(newPrice)) { statusEl.style.color = '#dc2626'; statusEl.textContent = 'Name and price are required.'; return; }
+          db.collection('menuitems').doc(doc.id).update({
+            name: newName, price: newPrice,
+            description: newDescription || null, photo: newPhoto || null, category: newCategory || null
+          }).then(function() { loadMenuItems(storeId); }).catch(function(err) {
+            statusEl.style.color = '#dc2626'; statusEl.textContent = err.message;
+          });
+        });
+
+        list.appendChild(row);
+      });
+    });
+  }
+
+  document.getElementById('addItemBtn').addEventListener('click', function() {
+    const storeId = isSuperadmin ? document.getElementById('menuStoreSelect').value : myStoreId;
+    const name = document.getElementById('newItemName').value.trim();
+    const price = parseFloat(document.getElementById('newItemPrice').value);
+    const description = document.getElementById('newItemDescription').value.trim();
+    const photo = document.getElementById('newItemPhoto').value.trim();
+    const category = document.getElementById('newItemCategory').value.trim();
+    const errorEl = document.getElementById('menuError');
+    errorEl.style.display = 'none';
+
+    if (!storeId) { errorEl.textContent = 'No store selected.'; errorEl.style.display = 'block'; return; }
+    if (!name) { errorEl.textContent = 'Please enter an item name.'; errorEl.style.display = 'block'; return; }
+    if (isNaN(price) || price <= 0) { errorEl.textContent = 'Please enter a valid price.'; errorEl.style.display = 'block'; return; }
+
+    db.collection('menuitems').add({
+      storeId: storeId, name: name, price: price,
+      description: description || null, photo: photo || null, category: category || null
+    }).then(function() {
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemPrice').value = '';
+      document.getElementById('newItemDescription').value = '';
+      document.getElementById('newItemPhoto').value = '';
+      document.getElementById('newItemCategory').value = '';
+      loadMenuItems(storeId);
+    }).catch(function(err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    });
+  });
+
+  document.getElementById('bulkImportBtn').addEventListener('click', function() {
+    const storeId = isSuperadmin ? document.getElementById('menuStoreSelect').value : myStoreId;
+    const statusEl = document.getElementById('bulkImportStatus');
+    const raw = document.getElementById('bulkImportText').value;
+    const lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+
+    if (!storeId) { statusEl.style.color = '#dc2626'; statusEl.textContent = 'No store selected.'; return; }
+    if (lines.length === 0) { statusEl.style.color = '#dc2626'; statusEl.textContent = 'Paste at least one product line.'; return; }
+
+    statusEl.style.color = 'var(--mist)';
+    statusEl.textContent = 'Importing ' + lines.length + ' products…';
+
+    const promises = lines.map(function(line) {
+      const parts = line.split('|').map(function(p) { return p.trim(); });
+      const name = parts[0] || '';
+      const price = parseFloat(parts[1]);
+      const description = parts[2] || null;
+      const photo = parts[3] || null;
+      const category = parts[4] || null;
+      if (!name || isNaN(price)) return Promise.resolve('skipped');
+      return db.collection('menuitems').add({ storeId: storeId, name: name, price: price, description: description, photo: photo, category: category });
+    });
+
+    Promise.all(promises).then(function(results) {
+      const skipped = results.filter(function(r) { return r === 'skipped'; }).length;
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = 'Imported ' + (results.length - skipped) + ' products' + (skipped ? ' (' + skipped + ' skipped — check formatting)' : '') + '.';
+      document.getElementById('bulkImportText').value = '';
+      loadMenuItems(storeId);
+    }).catch(function(err) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = err.message;
+    });
+  });
+
+  document.getElementById('bulkCategorizeBtn').addEventListener('click', function() {
+    const storeId = isSuperadmin ? document.getElementById('menuStoreSelect').value : myStoreId;
+    const statusEl = document.getElementById('bulkCategorizeStatus');
+    const raw = document.getElementById('bulkCategorizeText').value;
+    const lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+
+    if (!storeId) { statusEl.style.color = '#dc2626'; statusEl.textContent = 'No store selected.'; return; }
+    if (lines.length === 0) { statusEl.style.color = '#dc2626'; statusEl.textContent = 'Paste at least one line.'; return; }
+
+    statusEl.style.color = 'var(--mist)';
+    statusEl.textContent = 'Applying categories…';
+
+    db.collection('menuitems').where('storeId', '==', storeId).get().then(function(snap) {
+      const byName = {};
+      snap.forEach(function(doc) { byName[doc.data().name.trim().toLowerCase()] = doc.id; });
+
+      const updates = lines.map(function(line) {
+        const parts = line.split('|').map(function(p) { return p.trim(); });
+        const name = parts[0] || '';
+        const category = parts[1] || '';
+        const docId = byName[name.toLowerCase()];
+        if (!docId || !category) return Promise.resolve('skipped');
+        return db.collection('menuitems').doc(docId).update({ category: category }).then(function() { return 'ok'; });
+      });
+
+      return Promise.all(updates);
+    }).then(function(results) {
+      const ok = results.filter(function(r) { return r === 'ok'; }).length;
+      const skipped = results.length - ok;
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = 'Categorized ' + ok + ' products' + (skipped ? ' (' + skipped + ' skipped — name not found)' : '') + '.';
+      document.getElementById('bulkCategorizeText').value = '';
+      loadMenuItems(storeId);
+    }).catch(function(err) {
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = err.message;
+    });
+  });
+
+  // ── ORDERS ──
+  let isFirstOrderLoad = true;
+
+  function playNewOrderSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.18].forEach(function(delay) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.15);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.16);
+      });
+    } catch (e) { /* audio not available, ignore */ }
+  }
+
+  function listenForOrders() {
+    if (unsubscribe) unsubscribe();
+    let query = isSuperadmin
+      ? db.collection('orders').orderBy('createdAt', 'desc')
+      : db.collection('orders').where('storeId', '==', myStoreId).orderBy('createdAt', 'desc');
+
+    unsubscribe = query.onSnapshot(function(snap) {
+      if (!isFirstOrderLoad) {
+        snap.docChanges().forEach(function(change) {
+          if (change.type === 'added' && change.doc.data().status === 'placed') {
+            playNewOrderSound();
+          }
+        });
+      }
+      isFirstOrderLoad = false;
+
+      const orders = [];
+      snap.forEach(function(doc) { orders.push(Object.assign({ id: doc.id }, doc.data())); });
+      const filtered = currentFilter === 'active'
+        ? orders.filter(function(o) { return o.status !== 'delivered' && o.status !== 'rejected'; })
+        : orders;
+      renderOrders(filtered);
+    }, function(err) {
+      document.getElementById('ordersList').innerHTML = '<p style="color:#dc2626;">' + err.message + '</p>';
+    });
+  }
+
+  function renderOrders(orders) {
+    const list = document.getElementById('ordersList');
+    const emptyMsg = document.getElementById('emptyMsg');
+    if (orders.length === 0) {
+      list.innerHTML = '';
+      emptyMsg.style.display = 'block';
+      return;
+    }
+    emptyMsg.style.display = 'none';
+    list.innerHTML = '';
+    orders.forEach(function(order) {
+      const card = document.createElement('div');
+      card.className = 'order-card';
+      const itemsHtml = (order.items || []).map(function(it) {
+        return '<div class="item-line">' + it.qty + '× ' + it.name + ' — ' + fmtR(it.price * it.qty) + '</div>';
+      }).join('');
+      const when = order.createdAt && order.createdAt.toDate ? order.createdAt.toDate().toLocaleString() : '';
+      const deliveryHtml = order.deliveryAddress
+        ? '<div style="font-size:0.85rem;color:var(--forest);background:var(--sage);padding:8px 10px;border-radius:8px;margin:8px 0;"><strong>📍 Deliver to:</strong> ' + order.deliveryAddress + (order.deliveryZone ? ' (' + order.deliveryZone + ')' : '') + '</div>'
+        : '';
+
+      card.innerHTML =
+        '<div class="order-top">' +
+          '<div>' +
+            '<div style="font-weight:700;">' + (order.storeName || 'Store') + ' · ' + fmtR(order.total || 0) + '</div>' +
+            '<div style="font-size:0.8rem;color:var(--mist);">' + (order.customerName || order.customerEmail || 'Customer') + ' · ' + when + '</div>' +
+          '</div>' +
+          '<span class="order-status status-' + order.status + '">' + (statusLabels[order.status] || order.status) + '</span>' +
+        '</div>' +
+        deliveryHtml +
+        itemsHtml +
+        '<div class="actions" data-order-id="' + order.id + '"></div>';
+
+      const actions = card.querySelector('.actions');
+      const currentIndex = statusFlow.indexOf(order.status);
+
+      if (order.status === 'placed') {
+        const acceptBtn = document.createElement('button');
+        acceptBtn.className = 'btn-accept'; acceptBtn.textContent = 'Accept order';
+        acceptBtn.addEventListener('click', function() { updateStatus(order.id, 'store_accepted'); });
+        const rejectBtn = document.createElement('button');
+        rejectBtn.className = 'btn-reject'; rejectBtn.textContent = 'Reject';
+        rejectBtn.addEventListener('click', function() { updateStatus(order.id, 'rejected'); });
+        actions.appendChild(acceptBtn); actions.appendChild(rejectBtn);
+      } else if (currentIndex > -1 && currentIndex < statusFlow.length - 1) {
+        const nextStatus = statusFlow[currentIndex + 1];
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'btn-next'; nextBtn.textContent = 'Mark as ' + statusLabels[nextStatus];
+        nextBtn.addEventListener('click', function() { updateStatus(order.id, nextStatus); });
+        actions.appendChild(nextBtn);
+      }
+      list.appendChild(card);
+    });
+  }
+
+  function updateStatus(orderId, status) {
+    db.collection('orders').doc(orderId).update({ status: status });
+  }
+</script>
+</body>
+</html>
