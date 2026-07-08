@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Droplee — Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #22C55E; --green-dark: #16a34a; --green-light: #4ade80;
+    --forest: #0D1F0D; --sage: #F0F7F1; --slate: #4A5E4A; --mist: #8aab8a;
+    --white: #FFFFFF; --border: #ddeedd; --radius: 14px;
+    --shadow: 0 4px 24px rgba(13,31,13,0.08);
+  }
+  body { font-family: 'Poppins', sans-serif; background: var(--sage); color: var(--forest); min-height: 100vh; }
+
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 68px;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--green); text-decoration: none; }
+  .btn-nav-primary { padding: 9px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; color: var(--forest); background: var(--green); border: none; cursor: pointer; text-decoration: none; }
+
+  .store-header { background: var(--forest); color: var(--white); padding: 40px 24px; }
+  .store-header-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; gap: 20px; }
+  .store-header img { width: 80px; height: 80px; object-fit: contain; background: var(--white); border-radius: 14px; padding: 8px; flex-shrink: 0; }
+  .store-header h1 { font-family: 'Poppins', sans-serif; font-size: 1.6rem; margin-bottom: 4px; }
+  .store-header p { color: var(--mist); font-size: 0.9rem; }
+  a.back-link { color: var(--green); text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-block; margin-bottom: 12px; }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+  .product-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 20px; }
+  .product-card { background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+  .product-card img { width: 100%; height: 160px; object-fit: cover; background: var(--border); }
+  .product-card .no-img { width: 100%; height: 160px; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+  .product-info { padding: 14px 16px 16px; display: flex; flex-direction: column; flex: 1; }
+  .product-info h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+  .product-info p { font-size: 0.8rem; color: var(--mist); line-height: 1.5; margin-bottom: 12px; flex: 1; }
+  .product-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .product-price { font-weight: 700; color: var(--forest); }
+  .add-btn { background: var(--green); color: var(--white); border: none; border-radius: 8px; padding: 8px 16px; font-family: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer; }
+  .add-btn:hover { background: var(--green-dark); }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 20px 12px 60px; }
+    .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .product-card img, .product-card .no-img { height: 110px; }
+    .product-info { padding: 10px 10px 12px; }
+    .product-info h3 { font-size: 0.82rem; margin-bottom: 4px; }
+    .product-info p { font-size: 0.7rem; margin-bottom: 8px; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; display: -webkit-box; }
+    .product-bottom { flex-direction: column; align-items: stretch; gap: 8px; }
+    .add-btn { width: 100%; padding: 8px; font-size: 0.78rem; }
+    .product-price { font-size: 0.85rem; }
+  }
+  @media (min-width: 480px) and (max-width: 640px) {
+    .product-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .cat-tab { padding: 8px 16px; border-radius: 100px; border: 1.5px solid #d3ddd3; background: var(--white); font-family: inherit; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: var(--slate); }
+  .cat-tab.active { background: var(--forest); color: var(--white); border-color: var(--forest); }
+
+  #cartFab { display: none; position: fixed; bottom: 24px; right: 24px; background: var(--green); color: var(--white); border: none; border-radius: 100px; padding: 14px 22px; font-family: 'Poppins',sans-serif; font-weight: 700; font-size: 0.95rem; box-shadow: 0 12px 30px rgba(34,197,94,0.4); cursor: pointer; z-index: 900; align-items: center; gap: 8px; }
+  #cartModalOverlay { display: none; position: fixed; inset: 0; background: rgba(13,31,13,0.6); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+  #cartModalOverlay .modal-inner { background: var(--white); border-radius: 20px; max-width: 460px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 28px; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.3); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">droplee</a>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <a href="orders.html" id="navCartIcon" style="position:relative;text-decoration:none;color:var(--forest);font-size:1.3rem;line-height:1;">
+      🛒
+      <span id="navCartBadge" style="display:none;position:absolute;top:-8px;right:-10px;background:var(--green);color:var(--white);font-size:0.65rem;font-weight:700;border-radius:100px;padding:2px 6px;min-width:16px;text-align:center;"></span>
+    </a>
+    <div id="navAuthArea"></div>
+  </div>
+</nav>
+
+<div class="store-header">
+  <div class="store-header-inner">
+    <img id="storeLogo" src="droplee-logo.png" alt=""/>
+    <div>
+      <a href="index.html#stores" class="back-link">← Back to all stores</a>
+      <h1 id="storeName">Loading…</h1>
+      <p id="storeCategory"></p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="categoryTabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;"></div>
+  <div class="product-grid" id="productGrid">
+    <p style="color:var(--mist);grid-column:1/-1;">Loading products…</p>
+  </div>
+</div>
+
+<button id="cartFab">🛒 <span id="cartFabCount">0</span> · <span id="cartFabTotal">R0</span></button>
+
+<div id="cartModalOverlay">
+  <div class="modal-inner">
+    <button id="cartModalClose" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--slate);">✕</button>
+    <h2 style="font-family:'Poppins',sans-serif;font-size:1.3rem;color:var(--forest);margin-bottom:20px;">Your cart</h2>
+    <div id="cartModalItems"></div>
+    <div style="border-top:1.5px solid #E2E8E2;margin-top:16px;padding-top:16px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-family:'Poppins',sans-serif;font-weight:700;color:var(--forest);">Total</span>
+      <span id="cartModalTotal" style="font-family:'Poppins',sans-serif;font-weight:700;color:var(--forest);font-size:1.15rem;">R0</span>
+    </div>
+    <button id="checkoutBtn" style="width:100%;padding:14px;margin-top:18px;background:var(--green);border:none;border-radius:10px;color:var(--white);font-family:'Poppins',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;">Go to checkout</button>
+    <p id="checkoutError" style="color:#dc2626;font-size:0.85rem;margin-top:10px;display:none;"></p>
+    <p id="checkoutSuccess" style="color:var(--green);font-size:0.9rem;margin-top:10px;display:none;font-weight:600;"></p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCyMzg1D27qODVImEtAR5YhKV5_kWTskas",
+    authDomain: "droplee.firebaseapp.com",
+    projectId: "droplee",
+    storageBucket: "droplee.firebasestorage.app",
+    messagingSenderId: "240182730322",
+    appId: "1:240182730322:web:de6cdd6decf071e88e898b",
+    measurementId: "G-JSES0DWZN4"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  function fmtR(n) { return 'R' + n.toFixed(2).replace(/\.00$/, ''); }
+
+  const params = new URLSearchParams(window.location.search);
+  const storeId = params.get('id');
+  let storeData = null;
+
+  // ── NAV AUTH STATE ──
+  const navAuthArea = document.getElementById('navAuthArea');
+  auth.onAuthStateChanged(function(user) {
+    if (user) {
+      const name = user.displayName || user.email.split('@')[0];
+      navAuthArea.innerHTML = '<span style="font-weight:600;margin-right:14px;">Welcome, ' + name + '</span><a href="#" id="logoutBtn" class="btn-nav-primary">Log out</a>';
+      document.getElementById('logoutBtn').addEventListener('click', function(e) { e.preventDefault(); auth.signOut(); });
+    } else {
+      navAuthArea.innerHTML = '<a href="index.html" class="btn-nav-primary">Log in</a>';
+    }
+  });
+
+  // ── LOAD STORE + PRODUCTS ──
+  let allItems = [];
+  let currentCategory = 'All';
+
+  function renderProductGrid() {
+    const grid = document.getElementById('productGrid');
+    const filtered = currentCategory === 'All' ? allItems : allItems.filter(function(i) { return (i.category || 'Uncategorized') === currentCategory; });
+    if (filtered.length === 0) {
+      grid.innerHTML = '<p style="color:var(--mist);grid-column:1/-1;">No products in this category.</p>';
+      return;
+    }
+    grid.innerHTML = '';
+    filtered.forEach(function(item) {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.style.cursor = 'pointer';
+      const imgHtml = item.photo
+        ? '<img src="' + item.photo + '" alt="' + item.name + '"/>'
+        : '<div class="no-img">📦</div>';
+      card.innerHTML = imgHtml +
+        '<div class="product-info">' +
+          '<h3>' + item.name + '</h3>' +
+          '<p>' + (item.description || '') + '</p>' +
+          '<div class="product-bottom">' +
+            '<span class="product-price">' + fmtR(item.price) + '</span>' +
+            '<button class="add-btn">Add</button>' +
+          '</div>' +
+        '</div>';
+      card.addEventListener('click', function() {
+        window.location.href = 'product.html?id=' + encodeURIComponent(item.id) + '&store=' + encodeURIComponent(storeId);
+      });
+      card.querySelector('.add-btn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        addToCart(storeId, storeData.name, storeData.ownerEmail, item.id, item.name, item.price);
+        const btn = card.querySelector('.add-btn');
+        btn.textContent = 'Added ✓';
+        setTimeout(function() { btn.textContent = 'Add'; }, 900);
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  function renderCategoryTabs() {
+    const tabsEl = document.getElementById('categoryTabs');
+    const categories = Array.from(new Set(allItems.map(function(i) { return i.category || 'Uncategorized'; })));
+    if (categories.length <= 1) { tabsEl.innerHTML = ''; return; }
+    const allTabs = ['All'].concat(categories);
+    tabsEl.innerHTML = '';
+    allTabs.forEach(function(cat) {
+      const btn = document.createElement('button');
+      btn.className = 'cat-tab' + (cat === currentCategory ? ' active' : '');
+      btn.textContent = cat;
+      btn.addEventListener('click', function() {
+        currentCategory = cat;
+        document.querySelectorAll('.cat-tab').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        renderProductGrid();
+      });
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  if (!storeId) {
+    document.getElementById('storeName').textContent = 'Store not found';
+    document.getElementById('productGrid').innerHTML = '<p style="color:var(--mist);">No store was specified.</p>';
+  } else {
+    db.collection('stores').doc(storeId).get().then(function(doc) {
+      if (!doc.exists) {
+        document.getElementById('storeName').textContent = 'Store not found';
+        return;
+      }
+      storeData = Object.assign({ id: doc.id }, doc.data());
+      document.getElementById('storeName').textContent = storeData.name;
+      document.getElementById('storeCategory').textContent = storeData.category || '';
+      document.title = storeData.name + ' — Droplee';
+      if (storeData.logo) document.getElementById('storeLogo').src = storeData.logo;
+
+      return db.collection('menuitems').where('storeId', '==', storeId).get();
+    }).then(function(snap) {
+      if (!snap) return;
+      if (snap.empty) {
+        document.getElementById('productGrid').innerHTML = '<p style="color:var(--mist);grid-column:1/-1;">This store hasn\'t added any products yet.</p>';
+        return;
+      }
+      allItems = [];
+      snap.forEach(function(doc) { allItems.push(Object.assign({ id: doc.id }, doc.data())); });
+      renderCategoryTabs();
+      renderProductGrid();
+    }).catch(function(err) {
+      document.getElementById('productGrid').innerHTML = '<p style="color:#dc2626;">' + err.message + '</p>';
+    });
+  }
+
+  // ── CART (shared via localStorage with index.html) ──
+  let cart = JSON.parse(localStorage.getItem('droplee_cart') || '[]');
+  function saveCart() { localStorage.setItem('droplee_cart', JSON.stringify(cart)); }
+
+  function addToCart(storeId, storeName, ownerEmail, itemId, name, price) {
+    const existing = cart.find(function(c) { return c.itemId === itemId; });
+    if (existing) { existing.qty += 1; }
+    else { cart.push({ storeId: storeId, storeName: storeName, ownerEmail: ownerEmail, itemId: itemId, name: name, price: price, qty: 1 }); }
+    saveCart();
+    updateCartUI();
+  }
+
+  function cartTotal() { return cart.reduce(function(sum, c) { return sum + c.price * c.qty; }, 0); }
+  function cartCount() { return cart.reduce(function(sum, c) { return sum + c.qty; }, 0); }
+
+  function updateCartUI() {
+    const fab = document.getElementById('cartFab');
+    const badge = document.getElementById('navCartBadge');
+    if (cart.length === 0) {
+      fab.style.display = 'none';
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    fab.style.display = 'inline-flex';
+    document.getElementById('cartFabCount').textContent = cartCount();
+    document.getElementById('cartFabTotal').textContent = fmtR(cartTotal());
+    if (badge) { badge.style.display = 'inline-block'; badge.textContent = cartCount(); }
+  }
+  updateCartUI();
+
+  function renderCartModal() {
+    const itemsEl = document.getElementById('cartModalItems');
+    if (cart.length === 0) {
+      itemsEl.innerHTML = '<p style="color:var(--mist);">Your cart is empty.</p>';
+    } else {
+      itemsEl.innerHTML = cart.map(function(c, i) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #E2E8E2;">' +
+          '<div><div style="font-weight:600;color:var(--forest);">' + c.name + ' × ' + c.qty + '</div>' +
+          '<div style="font-size:0.8rem;color:var(--mist);">' + c.storeName + '</div></div>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<span style="font-weight:600;color:var(--forest);">' + fmtR(c.price * c.qty) + '</span>' +
+          '<button data-i="' + i + '" class="cartRemoveBtn" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:1.1rem;">✕</button>' +
+          '</div></div>';
+      }).join('');
+      document.querySelectorAll('.cartRemoveBtn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          cart.splice(parseInt(btn.getAttribute('data-i')), 1);
+          saveCart();
+          renderCartModal(); updateCartUI();
+        });
+      });
+    }
+    document.getElementById('cartModalTotal').textContent = fmtR(cartTotal());
+  }
+
+  const cartModalOverlay = document.getElementById('cartModalOverlay');
+  document.getElementById('cartFab').addEventListener('click', function() { renderCartModal(); cartModalOverlay.style.display = 'flex'; });
+  document.getElementById('cartModalClose').addEventListener('click', function() { cartModalOverlay.style.display = 'none'; });
+  cartModalOverlay.addEventListener('click', function(e) { if (e.target === cartModalOverlay) cartModalOverlay.style.display = 'none'; });
+
+  document.getElementById('checkoutBtn').addEventListener('click', function() {
+    const errorEl = document.getElementById('checkoutError');
+    errorEl.style.display = 'none';
+    if (cart.length === 0) { errorEl.textContent = 'Your cart is empty.'; errorEl.style.display = 'block'; return; }
+    if (!auth.currentUser) {
+      errorEl.textContent = 'Please log in first — your cart is saved, head to the homepage to log in.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    window.location.href = 'orders.html';
+  });
+</script>
+</body>
+</html>
