@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Droplee — Driver</title>
+<meta name="robots" content="noindex, nofollow"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #22C55E; --green-dark: #16a34a;
+    --forest: #0D1F0D; --sage: #F0F7F1; --slate: #4A5E4A; --mist: #8aab8a;
+    --white: #FFFFFF; --border: #ddeedd; --radius: 14px;
+    --shadow: 0 4px 24px rgba(13,31,13,0.08);
+  }
+  body { font-family: 'Poppins', sans-serif; background: var(--sage); color: var(--forest); min-height: 100vh; }
+  header { background: var(--forest); color: var(--white); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; }
+  header a, header button.linklike { color: var(--green); text-decoration: none; font-size: 0.85rem; font-weight: 600; background: none; border: none; cursor: pointer; font-family: inherit; }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 24px 16px 60px; }
+  .card { max-width: 380px; margin: 60px auto; background: var(--white); padding: 28px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+  .card input { width: 100%; padding: 12px 14px; margin-bottom: 10px; border: 1.5px solid #E2E8E2; border-radius: 10px; font-family: inherit; font-size: 0.95rem; }
+  .card button.primary { width: 100%; padding: 13px; background: var(--green); border: none; border-radius: 10px; color: var(--white); font-weight: 700; cursor: pointer; }
+  .errorMsg { color: #dc2626; font-size: 0.85rem; margin-top: 8px; display: none; }
+  .authToggle { display: flex; gap: 8px; margin-bottom: 20px; background: var(--sage); border-radius: 12px; padding: 4px; }
+  .authToggle button { flex: 1; padding: 10px; border: none; border-radius: 9px; font-family: inherit; font-weight: 600; cursor: pointer; background: transparent; color: var(--slate); }
+  .authToggle button.active { background: var(--white); color: var(--forest); }
+
+  .online-toggle { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+  .online-status { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .status-dot { width: 12px; height: 12px; border-radius: 100%; background: #d1d5db; }
+  .status-dot.live { background: var(--green); box-shadow: 0 0 0 4px rgba(34,197,94,0.2); }
+  .toggle-btn { padding: 10px 20px; border-radius: 100px; border: none; font-family: inherit; font-weight: 700; cursor: pointer; }
+  .toggle-btn.go { background: var(--green); color: var(--white); }
+  .toggle-btn.stop { background: #fee2e2; color: #991b1b; }
+
+  .order-card { background: var(--white); border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .order-status { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 10px; border-radius: 100px; }
+  .status-driver_assigned { background: #dbeafe; color: #1e40af; }
+  .status-picked_up { background: #ede9fe; color: #5b21b6; }
+  .item-line { font-size: 0.85rem; color: var(--slate); margin-bottom: 2px; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .actions button { padding: 9px 16px; border-radius: 8px; border: none; font-family: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer; background: var(--forest); color: var(--white); }
+  #emptyMsg { color: var(--mist); text-align: center; padding: 40px 0; }
+  .address-box { font-size: 0.85rem; color: var(--forest); background: var(--sage); padding: 8px 10px; border-radius: 8px; margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 style="font-size:1.2rem;">🛵 Droplee — Driver</h1>
+  <div style="display:flex;gap:16px;align-items:center;">
+    <button class="linklike" id="logoutBtn" style="display:none;">Log out</button>
+    <a href="index.html">← Back to site</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div id="authGate" class="card">
+    <div class="authToggle">
+      <button id="toggleLoginBtn" class="active">Log in</button>
+      <button id="toggleSignupBtn">Sign up</button>
+    </div>
+    <div id="loginBox">
+      <h2 style="margin-bottom:16px;">Driver login</h2>
+      <input type="email" id="loginEmail" placeholder="Email"/>
+      <input type="password" id="loginPassword" placeholder="Password"/>
+      <button class="primary" id="loginBtn">Log in</button>
+      <p class="errorMsg" id="loginError"></p>
+    </div>
+    <div id="signupBox" style="display:none;">
+      <h2 style="margin-bottom:16px;">Sign up as a driver</h2>
+      <input type="text" id="signupName" placeholder="Your name"/>
+      <input type="email" id="signupEmail" placeholder="Email"/>
+      <input type="password" id="signupPassword" placeholder="Password (6+ characters)"/>
+      <button class="primary" id="signupBtn">Sign up</button>
+      <p class="errorMsg" id="signupError"></p>
+    </div>
+  </div>
+
+  <div id="dashboard" style="display:none;">
+    <div class="online-toggle">
+      <div class="online-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Offline</span>
+      </div>
+      <button class="toggle-btn go" id="onlineToggleBtn">Go online</button>
+    </div>
+    <p id="geoError" style="color:#dc2626;font-size:0.85rem;margin-bottom:14px;display:none;"></p>
+
+    <h2 style="font-family:'Poppins',sans-serif;font-size:1.1rem;margin-bottom:12px;">My deliveries</h2>
+    <div id="deliveriesList"></div>
+    <p id="emptyMsg" style="display:none;">No deliveries assigned right now. Stay online and one will appear here automatically.</p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCyMzg1D27qODVImEtAR5YhKV5_kWTskas",
+    authDomain: "droplee.firebaseapp.com",
+    projectId: "droplee",
+    storageBucket: "droplee.firebasestorage.app",
+    messagingSenderId: "240182730322",
+    appId: "1:240182730322:web:de6cdd6decf071e88e898b",
+    measurementId: "G-JSES0DWZN4"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const statusLabels = { driver_assigned: 'Booked for pickup (4–7pm)', picked_up: 'Picked up — on the way' };
+  let watchId = null;
+  let unsubscribeDeliveries = null;
+
+  function fmtR(n) { return 'R' + n.toFixed(2).replace(/\.00$/, ''); }
+
+  // ── AUTH TOGGLE ──
+  document.getElementById('toggleLoginBtn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('toggleSignupBtn').classList.remove('active');
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('signupBox').style.display = 'none';
+  });
+  document.getElementById('toggleSignupBtn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('toggleLoginBtn').classList.remove('active');
+    document.getElementById('signupBox').style.display = 'block';
+    document.getElementById('loginBox').style.display = 'none';
+  });
+
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    errorEl.style.display = 'none';
+    auth.signInWithEmailAndPassword(email, password).catch(function(err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    });
+  });
+
+  document.getElementById('signupBtn').addEventListener('click', function() {
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const errorEl = document.getElementById('signupError');
+    errorEl.style.display = 'none';
+    if (!name || !email || !password) {
+      errorEl.textContent = 'Please fill in all fields.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    auth.createUserWithEmailAndPassword(email, password).then(function(cred) {
+      return cred.user.updateProfile({ displayName: name }).then(function() {
+        return db.collection('users').doc(cred.user.uid).set({
+          name: name, email: email, role: 'driver',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+    }).catch(function(err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    stopSharingLocation();
+    auth.signOut();
+  });
+
+  auth.onAuthStateChanged(function(user) {
+    document.getElementById('authGate').style.display = user ? 'none' : 'block';
+    document.getElementById('dashboard').style.display = user ? 'block' : 'none';
+    document.getElementById('logoutBtn').style.display = user ? 'inline' : 'none';
+    if (user) {
+      loadOnlineStatus(user.uid);
+      listenForMyDeliveries(user.uid);
+    } else {
+      if (unsubscribeDeliveries) unsubscribeDeliveries();
+    }
+  });
+
+  // ── ONLINE / GPS TOGGLE ──
+  function loadOnlineStatus(uid) {
+    db.collection('drivers').doc(uid).get().then(function(doc) {
+      const isOnline = doc.exists && doc.data().online;
+      updateOnlineUI(isOnline);
+      if (isOnline) startSharingLocation();
+    });
+  }
+
+  function updateOnlineUI(isOnline) {
+    document.getElementById('statusDot').classList.toggle('live', isOnline);
+    document.getElementById('statusText').textContent = isOnline ? 'Online — sharing location' : 'Offline';
+    const btn = document.getElementById('onlineToggleBtn');
+    btn.textContent = isOnline ? 'Go offline' : 'Go online';
+    btn.className = 'toggle-btn ' + (isOnline ? 'stop' : 'go');
+  }
+
+  function startSharingLocation() {
+    const errorEl = document.getElementById('geoError');
+    errorEl.style.display = 'none';
+    if (!navigator.geolocation) {
+      errorEl.textContent = 'Your browser does not support location sharing.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    const user = auth.currentUser;
+    watchId = navigator.geolocation.watchPosition(function(pos) {
+      db.collection('drivers').doc(user.uid).set({
+        online: true,
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        name: user.displayName || '',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    }, function(err) {
+      errorEl.textContent = 'Could not get your location: ' + err.message + '. Please allow location access.';
+      errorEl.style.display = 'block';
+      updateOnlineUI(false);
+    }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
+  }
+
+  function stopSharingLocation() {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    const user = auth.currentUser;
+    if (user) {
+      db.collection('drivers').doc(user.uid).set({ online: false }, { merge: true });
+    }
+  }
+
+  document.getElementById('onlineToggleBtn').addEventListener('click', function() {
+    const isCurrentlyOnline = this.classList.contains('stop');
+    if (isCurrentlyOnline) {
+      stopSharingLocation();
+      updateOnlineUI(false);
+    } else {
+      updateOnlineUI(true);
+      startSharingLocation();
+    }
+  });
+
+  // ── MY DELIVERIES ──
+  function listenForMyDeliveries(uid) {
+    if (unsubscribeDeliveries) unsubscribeDeliveries();
+    unsubscribeDeliveries = db.collection('orders').where('driverUid', '==', uid)
+      .onSnapshot(function(snap) {
+        const list = document.getElementById('deliveriesList');
+        const emptyMsg = document.getElementById('emptyMsg');
+        const active = [];
+        snap.forEach(function(doc) {
+          const o = Object.assign({ id: doc.id }, doc.data());
+          if (o.status === 'driver_assigned' || o.status === 'picked_up') active.push(o);
+        });
+        if (active.length === 0) {
+          list.innerHTML = '';
+          emptyMsg.style.display = 'block';
+          return;
+        }
+        emptyMsg.style.display = 'none';
+        list.innerHTML = '';
+        active.forEach(function(order) {
+          const itemsHtml = (order.items || []).map(function(it) {
+            return '<div class="item-line">' + it.qty + '× ' + it.name + '</div>';
+          }).join('');
+          const card = document.createElement('div');
+          card.className = 'order-card';
+          card.innerHTML =
+            '<div class="order-top">' +
+              '<div><div style="font-weight:700;">' + (order.storeName || 'Store') + ' · ' + fmtR(order.total || 0) + '</div>' +
+              '<div style="font-size:0.8rem;color:var(--mist);">' + (order.customerName || order.customerEmail || 'Customer') + '</div></div>' +
+              '<span class="order-status status-' + order.status + '">' + (statusLabels[order.status] || order.status) + '</span>' +
+            '</div>' +
+            (order.deliveryAddress ? '<div class="address-box">📍 ' + order.deliveryAddress + (order.deliveryZone ? ' (' + order.deliveryZone + ')' : '') + '</div>' : '') +
+            itemsHtml +
+            '<div class="actions" data-order-id="' + order.id + '"></div>';
+
+          const actions = card.querySelector('.actions');
+          if (order.status === 'driver_assigned') {
+            const btn = document.createElement('button');
+            btn.textContent = 'Picked up from store';
+            btn.addEventListener('click', function() { updateOrderStatus(order.id, 'picked_up'); });
+            actions.appendChild(btn);
+          } else if (order.status === 'picked_up') {
+            const btn = document.createElement('button');
+            btn.textContent = 'Mark delivered';
+            btn.addEventListener('click', function() { updateOrderStatus(order.id, 'delivered'); });
+            actions.appendChild(btn);
+          }
+          list.appendChild(card);
+        });
+      });
+  }
+
+  function updateOrderStatus(orderId, status) {
+    db.collection('orders').doc(orderId).update({ status: status });
+  }
+</script>
+</body>
+</html>
